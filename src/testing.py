@@ -17,7 +17,7 @@ plt.axis('off')  # Hide axis for image
 plt.show()
 
 #Plot specific row of RGB
-specific_row = image_array.shape[0] // 2 #Middle Row
+specific_row = image_array.shape[0] // 4 #Middle Row
 
 red_signal = red_channel[specific_row, :]
 green_signal = green_channel[specific_row, :]
