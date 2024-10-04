@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
+import random 
 
 #Local Imports
 import blotch_func
@@ -74,10 +75,45 @@ def advancedBlotches(image):
     #red_channel = smoothed_mask_gaussian[:, :, 0]   # Red channel
     #axs[1,1].plot(red_channel[500, :], color='red', label='Red Channel')
 
+    #New Binary Area of the smooth/fuzzy blotches
+    _, binary_blotch_mask = cv2.threshold(smoothed_mask_gaussian, 254, 255, cv2.THRESH_BINARY)
+    #print(binary_blotch_mask.shape)
+    binary_blotch_mask = cv2.bitwise_not(binary_blotch_mask)
+
+    #Use connected components to add colour variants to each blotch
+    num_labels, labels = cv2.connectedComponents(binary_blotch_mask[:,:,1])
+
+    blotch_colour_mask = np.zeros_like(labels, dtype=np.uint8)
+
+    print(num_labels)
+    for label in range(1,num_labels):
+        rand_colour = random.randint(0,255)
+
+        blotch_colour_mask = np.where(labels==label, rand_colour, blotch_colour_mask)
+
+    height, width = labels.shape
+    blotch_colour_mask_RGB = np.zeros((height, width, 3), dtype=np.uint8)
+    blotch_colour_mask_RGB[:,:,0] = blotch_colour_mask
+    blotch_colour_mask_RGB[:,:,1] = blotch_colour_mask
+    blotch_colour_mask_RGB[:,:,2] = blotch_colour_mask
+
+    axs[1,1].imshow(blotch_colour_mask_RGB)
+    axs[1,1].set_title("Coloured Blotches")
+    axs[1,1].axis('off')  # Hide axis for image
+
+
+    Y= smoothed_mask_gaussian.astype(np.float32) / 255.0 #Percentage Representation
+    blotch_image = ((1-Y)*blotch_colour_mask_RGB) + (Y*image_array)
+    plt.figure(figsize=(6, 6))
+    plt.imshow(blotch_image.astype(np.uint8))
+    plt.title("Blotchy")
+    plt.axis('off')  # Hide axis for image
+
+
     plt.tight_layout()
     plt.show()
 
 
 image = Image.open('./test_images/1080p_rand.jpg')
-crudeBlotches(image)
-#advancedBlotches(image)
+#crudeBlotches(image)
+advancedBlotches(image)
