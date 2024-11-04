@@ -17,8 +17,8 @@ def generateBlotch_new(image, maxNumBlotches, blotchProb, maxBlotchSize):
         _blotchPresent = random.random()
         if _blotchPresent < blotchProb:
             _shape = random.choice(shapes)
-            x = random.randint(maxBlotchSize//2, padded_shape[0] - maxBlotchSize//2)
-            y = random.randint(maxBlotchSize//2, padded_shape[1] - maxBlotchSize//2)
+            x = random.randint(maxBlotchSize//2, padded_shape[1] - maxBlotchSize//2)
+            y = random.randint(maxBlotchSize//2, padded_shape[0] - maxBlotchSize//2)
 
             if _shape == 'arc':
                 x_end, y_end = random.randint(x, x + maxBlotchSize - 1), random.randint(y, y + maxBlotchSize - 1)

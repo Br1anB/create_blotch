@@ -113,7 +113,9 @@ def advancedBlotches(image):
     plt.tight_layout()
     plt.show()
 
+    return blotch_image
 
-image = Image.open('./test_images/1080p_rand.jpg')
+
+#image = Image.open('./test_images/1080p_rand.jpg')
 #crudeBlotches(image)
-advancedBlotches(image)
+#advancedBlotches(image)
