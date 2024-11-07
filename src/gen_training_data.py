@@ -10,6 +10,7 @@ import blotch_func
 
 def generate_blotch_colour():
     # Generate a random number between 0 and 1
+    #return 0
     r = random.random()
     # 80% chance for ranges [0-55] or [200-255]
     if r < 0.8:
@@ -31,11 +32,11 @@ def advancedBlotches(image):
     image_array = np.array(image)
 
     #Generate Blotch Mask
-    blotch_mask = blotch_func.generateBlotch_new(image, 1, 0.8, 30) #max num blotches 1, prob 0.8, max size 30
+    blotch_mask = blotch_func.generateBlotch_new(image, 4, 0.8, 30) #max num blotches 1, prob 0.8, max size 30
     blotch_mask = blotch_mask*255 #Conver to 255 range
     
     #Add some kind of blur on the Mask
-    smoothed_mask_gaussian = cv2.GaussianBlur(blotch_mask, (13, 13), sigmaX=3, sigmaY=3)
+    smoothed_mask_gaussian = blotch_mask # cv2.GaussianBlur(blotch_mask, (3, 3), sigmaX=3, sigmaY=3) # 13,13
 
     #New Binary Area of the smooth/fuzzy blotches
     _, binary_blotch_mask = cv2.threshold(smoothed_mask_gaussian, 254, 255, cv2.THRESH_BINARY)
@@ -63,7 +64,7 @@ def advancedBlotches(image):
     Y= smoothed_mask_gaussian.astype(np.float32) / 255.0 #Percentage Representation
     blotch_image = ((1 - Y) * blotch_colour_mask_RGB) + (Y * image_array)
 
-    return blotch_image, binary_blotch_mask
+    return blotch_image, binary_blotch_mask, blotch_mask
 
 
 # Cuts input frame into patches, adds blotches, reconstructs.
@@ -75,19 +76,21 @@ def processFrame(input_frame, patch_size):
     #initialise output frame as all zeros
     output_frame = np.zeros_like(input_frame)
     mask_frame = np.zeros_like(input_frame)
+    blotch_frame = np.zeros_like(input_frame)
 
     for y in range(0, height, patch_size):
         for x in range(0, width, patch_size):
             #Initialise patch
             patch = input_frame[y:y+patch_size, x:x+patch_size]
 
-            processed_patch, mask_patch = advancedBlotches(patch)
+            processed_patch, mask_patch, blotch_patch = advancedBlotches(patch)
 
             output_frame[y:y+patch.shape[0], x:x+patch.shape[1]] = processed_patch
             mask_frame[y:y+patch.shape[0], x:x+patch.shape[1]] = mask_patch
+            blotch_frame[y:y+patch.shape[0], x:x+patch.shape[1]] = blotch_patch
     
     #print("Frame Completed")
-    return output_frame, mask_frame
+    return output_frame, mask_frame, blotch_frame
 
 
 #Given inputDir process numMP4 present in folder and output degraded images to outputDir
@@ -118,7 +121,7 @@ def genTrainingData(input_dir, output_dir, num_MP4):
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             #process frame
-            processed_frame, mask_frame = processFrame(frame_rgb, 256)#convert to patches, process, reformat, return
+            processed_frame, mask_frame, blotch_frame = processFrame(frame_rgb, 256)#convert to patches, process, reformat, return
 
             frame_file_path = os.path.join(video_output_dir, f"frame_{frame_count}.npy")
             np.save(frame_file_path, processed_frame)
@@ -126,26 +129,29 @@ def genTrainingData(input_dir, output_dir, num_MP4):
             mask_file_path = os.path.join(video_output_dir, f"mask_{frame_count}.npy")
             np.save(mask_file_path, mask_frame)
 
-            if (frame_count == 5):
-                plt.figure(figsize=(6, 6))
-                plt.imshow(processed_frame.astype(np.uint8))
-                plt.title("Blotchy")
-                plt.axis('off')  # Hide axis for image
-
-                plt.tight_layout()
-                plt.show()
+            blotch_file_path = os.path.join(video_output_dir, f"blotch_{frame_count}.npy")
+            np.save(blotch_file_path, blotch_frame)
             
-            if (frame_count == 5):
-                plt.figure(figsize=(6, 6))
-                plt.imshow(mask_frame.astype(np.uint8))
-                plt.title("Binary")
-                plt.axis('off')  # Hide axis for image
-
-                plt.tight_layout()
-                plt.show()
-
+            # Testing Purposes
+            #if (frame_count == 5):
+            #    plt.figure(figsize=(6, 6))
+            #    plt.imshow(processed_frame.astype(np.uint8))
+            #    plt.title("Blotchy")
+            #    plt.axis('off')  # Hide axis for image
+            #    plt.tight_layout()
+            #    plt.show()
+            #
+            #if (frame_count == 5):
+            #    plt.figure(figsize=(6, 6))
+            #    plt.imshow(mask_frame.astype(np.uint8))
+            #    plt.title("Binary")
+            #    plt.axis('off')  # Hide axis for image
+            #    plt.tight_layout()
+            #    plt.show()
 
             frame_count += 1
+            if (frame_count >= 3):
+                break
 
 
         cap.release()  # Release the video capture object
@@ -154,7 +160,7 @@ def genTrainingData(input_dir, output_dir, num_MP4):
 
     print("All videos processed sucessfully... I hope")
 
-input_dir = "/home/brian/Desktop/MAI Project/degrade_vid_pres/CLEAN_VIDEO/FHD/"
-output_dir = "/home/brian/Desktop/MAI Project/degrade_vid_pres/patch_testing/"
+input_dir = "C:/Users/brian/Desktop/MAIProject/MP4/clean_video/"
+output_dir = "C:/Users/brian/Desktop/MAIProject/MP4/training_data/"
 
-genTrainingData(input_dir, output_dir, 1)
+genTrainingData(input_dir, output_dir, 100)
