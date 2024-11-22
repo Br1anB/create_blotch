@@ -16,12 +16,12 @@ def generate_blotch_colour():
     if r < 0.8:
         # Pick randomly between the two ranges
         if random.random() < 0.5:
-            return random.randint(0, 55)
+            return random.randint(0, 35)
         else:
-            return random.randint(200, 255)
+            return random.randint(230, 255)
     # 20% chance for the range [56-199]
     else:
-        return random.randint(56, 199)
+        return random.randint(36, 219)
 
 
 def advancedBlotches(image):
@@ -32,11 +32,11 @@ def advancedBlotches(image):
     image_array = np.array(image)
 
     #Generate Blotch Mask
-    blotch_mask = blotch_func.generateBlotch_new(image, 4, 0.8, 30) #max num blotches 1, prob 0.8, max size 30
+    blotch_mask = blotch_func.generateBlotch_new(image, 1, 0.8, 30) #max num blotches 1, prob 0.8, max size 30
     blotch_mask = blotch_mask*255 #Conver to 255 range
     
     #Add some kind of blur on the Mask
-    smoothed_mask_gaussian = blotch_mask # cv2.GaussianBlur(blotch_mask, (3, 3), sigmaX=3, sigmaY=3) # 13,13
+    smoothed_mask_gaussian = cv2.GaussianBlur(blotch_mask, (5, 5), sigmaX=3, sigmaY=3) # 13,13
 
     #New Binary Area of the smooth/fuzzy blotches
     _, binary_blotch_mask = cv2.threshold(smoothed_mask_gaussian, 254, 255, cv2.THRESH_BINARY)
@@ -63,6 +63,7 @@ def advancedBlotches(image):
 
     Y= smoothed_mask_gaussian.astype(np.float32) / 255.0 #Percentage Representation
     blotch_image = ((1 - Y) * blotch_colour_mask_RGB) + (Y * image_array)
+    blotch_image = blotch_image.astype(np.uint8)
 
     return blotch_image, binary_blotch_mask, blotch_mask
 
@@ -85,6 +86,27 @@ def processFrame(input_frame, patch_size):
 
             processed_patch, mask_patch, blotch_patch = advancedBlotches(patch)
 
+            fig, axes = plt.subplots(1, 3, figsize=(12, 4))  # 1 row, 3 columns, adjust figsize as needed
+
+            # First image
+            axes[0].imshow(patch, cmap='gray')  # Use 'gray' for grayscale or remove for RGB
+            axes[0].axis('off')  # Turn off axis
+            axes[0].set_title("(A)")
+
+            # Second image
+            axes[1].imshow(processed_patch, cmap='gray')  # Use 'gray' for grayscale or remove for RGB
+            axes[1].axis('off')  # Turn off axis
+            axes[1].set_title("(B)")
+
+            # Third image
+            axes[2].imshow(mask_patch, cmap='gray')  # Use 'gray' for grayscale or remove for RGB
+            axes[2].axis('off')  # Turn off axis
+            axes[2].set_title("(C)")
+
+            # Adjust layout and show
+            plt.tight_layout()
+            plt.show()
+
             output_frame[y:y+patch.shape[0], x:x+patch.shape[1]] = processed_patch
             mask_frame[y:y+patch.shape[0], x:x+patch.shape[1]] = mask_patch
             blotch_frame[y:y+patch.shape[0], x:x+patch.shape[1]] = blotch_patch
@@ -101,7 +123,7 @@ def genTrainingData(input_dir, output_dir, num_MP4):
         os.makedirs(output_dir)
 
     #Iterate over numMP4
-    for i in range(1, (num_MP4 + 1)):
+    for i in range(2, (num_MP4 + 2)):
         #Update input and output path for current mp4
         video_path = os.path.join(input_dir, f"{i}.mp4")
         video_output_dir = os.path.join(output_dir, str(i))
@@ -132,22 +154,41 @@ def genTrainingData(input_dir, output_dir, num_MP4):
             blotch_file_path = os.path.join(video_output_dir, f"blotch_{frame_count}.npy")
             np.save(blotch_file_path, blotch_frame)
             
-            # Testing Purposes
-            #if (frame_count == 5):
-            #    plt.figure(figsize=(6, 6))
-            #    plt.imshow(processed_frame.astype(np.uint8))
-            #    plt.title("Blotchy")
-            #    plt.axis('off')  # Hide axis for image
-            #    plt.tight_layout()
-            #    plt.show()
-            #
-            #if (frame_count == 5):
-            #    plt.figure(figsize=(6, 6))
-            #    plt.imshow(mask_frame.astype(np.uint8))
-            #    plt.title("Binary")
-            #    plt.axis('off')  # Hide axis for image
-            #    plt.tight_layout()
-            #    plt.show()
+            
+            
+            # plt.figure(figsize=(6, 6))
+            # plt.imshow(processed_frame.astype(np.uint8))
+            # plt.title("Blotchy")
+            # plt.axis('off')  # Hide axis for image
+            # plt.tight_layout()
+            # plt.show()
+            # 
+            # plt.figure(figsize=(6, 6))
+            # plt.imshow(mask_frame.astype(np.uint8))
+            # plt.title("Binary")
+            # plt.axis('off')  # Hide axis for image
+            # plt.tight_layout()
+            # plt.show()
+
+            fig, axes = plt.subplots(1, 3, figsize=(12, 4))  # 1 row, 3 columns, adjust figsize as needed
+            # First image
+            axes[0].imshow(frame_rgb, cmap='gray')  # Use 'gray' for grayscale or remove for RGB
+            axes[0].axis('off')  # Turn off axis
+            axes[0].set_title("(A)")
+
+            # Second image
+            axes[1].imshow(processed_frame, cmap='gray')  # Use 'gray' for grayscale or remove for RGB
+            axes[1].axis('off')  # Turn off axis
+            axes[1].set_title("(B)")
+
+            # Third image
+            axes[2].imshow(mask_frame, cmap='gray')  # Use 'gray' for grayscale or remove for RGB
+            axes[2].axis('off')  # Turn off axis
+            axes[2].set_title("(C)")
+
+            # Adjust layout and show
+            plt.tight_layout()
+            plt.show()
 
             frame_count += 1
             if (frame_count >= 3):
@@ -163,4 +204,4 @@ def genTrainingData(input_dir, output_dir, num_MP4):
 input_dir = "C:/Users/brian/Desktop/MAIProject/MP4/clean_video/"
 output_dir = "C:/Users/brian/Desktop/MAIProject/MP4/training_data/"
 
-genTrainingData(input_dir, output_dir, 100)
+genTrainingData(input_dir, output_dir, 1)

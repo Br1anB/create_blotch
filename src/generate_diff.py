@@ -51,27 +51,26 @@ def process_and_save_frames():
 
             result = np.concatenate((diff_1_2, frame_2, diff_2_3), axis=-1)
 
-            # plt.figure(figsize=(12, 6))
-            #
-            # # Show diff_1_2
-            # plt.subplot(1, 3, 1)
-            # plt.imshow(diff_1_2, cmap='gray')
-            # plt.title('Difference (Frame 1 -> Frame 2)')
-            # plt.axis('off')
-            # 
-            # # Show frame_2 for reference
-            # plt.subplot(1, 3, 2)
-            # plt.imshow(frame_2, cmap='gray')
-            # plt.title('Frame 2')
-            # plt.axis('off')
-            # 
-            # # Show diff_2_3
-            # plt.subplot(1, 3, 3)
-            # plt.imshow(diff_2_3, cmap='gray')
-            # plt.title('Difference (Frame 2 -> Frame 3)')
-            # plt.axis('off')
-            #
-            # plt.show()
+            plt.figure(figsize=(12, 6))
+                        # Show diff_1_2
+            plt.subplot(1, 3, 1)
+            plt.imshow(diff_1_2, cmap='gray')
+            plt.title('(A)')
+            plt.axis('off')
+            
+            # Show frame_2 for reference
+            plt.subplot(1, 3, 2)
+            plt.imshow(frame_2, cmap='gray')
+            plt.title('(B)')
+            plt.axis('off')
+            
+            # Show diff_2_3
+            plt.subplot(1, 3, 3)
+            plt.imshow(diff_2_3, cmap='gray')
+            plt.title('(C)')
+            plt.axis('off')
+            plt.tight_layout()
+            plt.show()
 
             result_file_path = os.path.join(folder_path, "processed_frames.npy")
             np.save(result_file_path, result)
